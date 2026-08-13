@@ -407,7 +407,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" id="btn-save" onclick="saveOnly()">&#128190; บันทึกข้อมูล</button>
-      
       <button class="btn btn-outline" id="btn-edit" onclick="unlockForm()" style="display:none">&#9998; แก้ไขข้อมูล</button>
     </div>
     <div id="form-status" style="margin-top:10px;font-size:12px;min-height:16px"></div>
@@ -528,7 +527,7 @@ function goPage(id,btn) {
 }
 
 async function init() {
-  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value = todayLocalStr();
   updateDocNo();
   await Promise.all([loadEquipment(), loadApprovals()]);
   buildSearchStation();
@@ -676,7 +675,8 @@ function collectForm() {
     bv_off: document.getElementById('bv_off').value||'',
     bh_ang: document.getElementById('bh_ang').value||'',
     bh_off: document.getElementById('bh_off').value||'',
-    copy_from_before: document.getElementById('copy-check').checked,
+    copy_from_before: ['v_ang','v_off','h_ang','h_off'].every(k =>
+      document.getElementById('b'+k).value === document.getElementById('a'+k).value),
     av_ang: document.getElementById('av_ang').value||'',
     av_off: document.getElementById('av_off').value||'',
     ah_ang: document.getElementById('ah_ang').value||'',
@@ -811,7 +811,7 @@ function fillForm(r){
   document.getElementById('f-station').value=st; onStationChange();
   setTimeout(()=>{
     document.getElementById('f-pump').value=pn; onPumpChange();
-    document.getElementById('f-date').value=String(r['วันที่']||'').slice(0,10);
+    document.getElementById('f-date').value=toLocalDateStr(new Date(r['วันที่']));
     document.getElementById('f-remark').value=r['หมายเหตุ']||'';
     document.getElementById('bv_ang').value=r['BVAngular']||'';
     document.getElementById('bv_off').value=r['BVOffset']||'';
@@ -839,7 +839,7 @@ function clearForm(){
   FORM_FIELD_IDS.forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false;});
   document.getElementById('f-station').value='';
   document.getElementById('f-pump').innerHTML='<option value="">— เลือก —</option>';
-  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value=todayLocalStr();
   document.getElementById('f-limit-ang').value=''; document.getElementById('f-limit-off').value='';
   document.getElementById('f-footer').value=''; document.getElementById('f-remark').value='';
   document.getElementById('f-approval').value='';
@@ -1025,6 +1025,13 @@ async function apiPost(payload){const res=await fetch(GAS_URL,{method:'POST',hea
 async function apiFetch(action){const res=await fetch(GAS_URL+'?action='+action+'&_='+Date.now());return await res.json();}
 
 let _tt;
+// ── DATE HELPERS (local time — avoids UTC day-shift) ──
+function toLocalDateStr(d){
+  if(!(d instanceof Date)||isNaN(d)) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function todayLocalStr(){ return toLocalDateStr(new Date()); }
+
 function toast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+(type||'');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3500);}
 
 initSession();

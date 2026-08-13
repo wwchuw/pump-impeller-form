@@ -428,7 +428,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <!-- ปุ่ม -->
     <div class="btn-row">
       <button class="btn btn-primary" id="btn-save"     onclick="saveOnly()">&#128190; บันทึกข้อมูล</button>
-      
       <button class="btn btn-outline" id="btn-edit"     onclick="unlockForm()" style="display:none">&#9998; แก้ไขข้อมูล</button>
     </div>
     <div id="form-status" style="margin-top:10px;font-size:12px;min-height:16px"></div>
@@ -559,7 +558,7 @@ function goPage(id,btn) {
 //  INIT
 // ============================================================
 async function init() {
-  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value = todayLocalStr();
   updateDocNo();
   await Promise.all([loadEquipment(), loadApprovals()]);
   buildSearchStation();
@@ -931,7 +930,7 @@ function fillForm(r) {
     document.getElementById('f-pump').value=pn;
     onPumpChange();
 
-    document.getElementById('f-date').value=String(r['วันที่']||'').slice(0,10);
+    document.getElementById('f-date').value=toLocalDateStr(new Date(r['วันที่']));
     document.getElementById('f-beforeafter').value=r['Before or After']||'Before';
     document.getElementById('f-remark').value=r['หมายเหตุ']||'';
 
@@ -975,7 +974,7 @@ function clearForm() {
   editMode=false; editDocNo='';
   document.getElementById('f-station').value='';
   document.getElementById('f-pump').innerHTML='<option value="">— เลือก —</option>';
-  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value=todayLocalStr();
   document.getElementById('f-limit').value='';
   document.getElementById('f-footer').value='';
   document.getElementById('f-beforeafter').value='Before';
@@ -1370,6 +1369,13 @@ initSession();
 
 // ── TOAST ──
 let _tt;
+// ── DATE HELPERS (local time — avoids UTC day-shift) ──
+function toLocalDateStr(d){
+  if(!(d instanceof Date)||isNaN(d)) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function todayLocalStr(){ return toLocalDateStr(new Date()); }
+
 function toast(msg,type){
   const el=document.getElementById('toast');
   el.textContent=msg;el.className='toast show '+(type||'');
